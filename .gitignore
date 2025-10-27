@@ -1,0 +1,8 @@
+venv
+*.pyc
+*/__pycache__
+logs
+build
+dist
+temp_build.spec
+UnrealEngineSwitchboardSync.code-workspace

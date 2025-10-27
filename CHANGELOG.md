@@ -1,0 +1,209 @@
+### v1.5.5  
+#### 2025/10/03  
+- 🐛 **Device grid 穩定性**：強化 `eventFilter`，只在 `QEvent.Resize` 時處理，遇到非 `QEvent`（例如 `QWidgetItem`）安全忽略，並在父類呼叫加上型別防護，避免長時間運行後出現 `AttributeError/TypeError`。  
+
+### v1.5.4  
+#### 2025/10/02  
+- 🧭 **Settings > General**：新增「Start on Windows launch」設定（預設關閉）。啟用時會建立開機自啟的快捷方式至使用者啟動資料夾，名稱為 `SwitchboardMultiUserMonitor.lnk`。  
+- 🧰 **實作細節**：優先使用 COM（`WScript.Shell`）建立捷徑，失敗時改用 PowerShell；可讀取現況並同步勾選狀態。  
+
+### v1.5.3  
+#### 2025/09/29  
+- ⚙️ **設定：Stop all devices on exit**：新增 `[switchboard] stop_all_devices_on_exit=false`（預設）。當啟用時，關閉應用會依序「Stop All → 強制關閉各裝置 → Disconnect All → 停止 MU Server」。  
+- 🧹 **關閉流程更穩定**：加入逐裝置 `close(force=True)` 後備，以及明確關閉 rsync server，避免出現「restarting…」訊息。  
+- 📁 **Listener 路徑偵測**：同時支援 `D:\UE_5.6\Engine` 與 `C:\Program Files\Epic Games\UE_5.6\Engine` 的 exe 與 log 路徑自動偵測。  
+
+### v1.5.2  
+#### 2025/09/24  
+- 🖥️ **Switchboard Listener 分頁**：新增專屬分頁，啟動 `SwitchboardListener.exe` 並即時追蹤日誌檔（`.../Saved/Logs/SwitchboardListener.log`）。  
+- 🎨 **日誌高亮**：與 Switchboard New 相同的語法高亮，支援 Wrap、Auto‑scroll、Clear。  
+- 🔘 **控制按鈕**：右上角新增「Stop/Start listener」與「Restart listener」，可即時停止/重啟並重置追蹤。  
+- 🧩 **UI 間距**：調整工具列左右 padding（5px）與按鈕間距，避免貼邊與擁擠。  
+- 🧼 **關閉行為**：退出應用或分頁時停止 tail 並終止 listener 行程。  
+
+### v1.5.1  
+#### 2025/09/22  
+- 🧰 **Switchboard 設定擴充**：新增「Auto stop Multi-user server when Stop All」選項，寫入 `[switchboard] auto_stop_muserver_on_stop_all`。  
+- 🔗 **行為整合**：`auto_stop_muserver_after_stop_all()` 於 Stop All 後延遲關閉 Multi‑user Server（可開關），並已在新標籤的全域控制邏輯中掛載。  
+
+### v1.5.0  
+#### 2025/09/17  
+- 🧭 **Settings 分頁（初版）**：新增 Settings 標籤頁，採用可展開/收縮卡片式區塊（樣式與 Changelog 一致），預設展開。  
+- ⚙️ **設定檔結構**：自動建立 `Documents/SwitchboardSync/settings/config.ini`，僅包含 `[switchboard]` 區段：`auto_connect_device=false`（預設）。  
+- 🔌 **自動連線整合**：新增 `core.app_settings.connect_all_devices_if_enabled()`；當 `auto_connect_device=true` 時，啟動後自動重試呼叫「Connect All」直至 Switchboard 準備就緒。`switchboard_new_tab.py` 已在初始化時掛載此行為。  
+- 🗂️ **Locate**：Settings 底部提供「Config file: <path> | Locate」按鈕，可於檔案總管定位 `config.ini`。  
+- 🧾 **版本顯示**：Settings 右下角顯示目前版本號，與其他頁一致。  
+
+### v1.4.3  
+#### 2025/09/11  
+- 🧩 **Switchboard New：日誌管線統一**：改為附加至 Python root logger（Qt signal → UI），捨棄易遺漏的文字鏡像；輸出與 `SVNWidget`、nDisplay Monitor 一致且完整。  
+- 🐛 **修復**：
+  - 修正 `NameError: Signal is not defined`（補齊 `Signal` 匯入）。  
+  - 關閉分頁時移除 root logger handler 與計時器，避免重複輸出與資源外洩。  
+- 🧭 **捲動行為優化**：追加日誌後自動將垂直捲軸移至底部，並強制水平捲軸停在最左（避免長行導致停在中間）。  
+
+### v1.4.2  
+#### 2025/09/08  
+- 🎨 **Logger 著色（SVN）**：`SVNWidget` 的 Operation Log 新增語法高亮（DEBUG/WARNING/ERROR/SUCCESS/INFO），與 Switchboard New 與 nDisplay Monitor 保持一致。  
+- 🧩 **日誌管線統一**：附加至 Python root logger 的 handler，透過 Qt 訊號驅動 UI，避免重複 handler 並確保等級過濾一致。  
+- 🧼 **輸出方式調整**：`log_message()` 以純文字輸出，顏色由高亮器處理；保留自動捲動與檔案記錄。  
+- 🖼️ **外觀一致性**：Logger 背景與字體樣式統一深色主題。  
+
+### v1.4.1  
+#### 2025/09/05  
+- 🎨 **Logger 著色**：Switchboard New 的日誌加入語法高亮（DEBUG/WARN/ERROR/SUCCESS），載入完成即刻套用顏色（rehighlight）。未匹配等級的行以資訊色顯示，避免全灰。  
+- 🛡️ **初始化穩定性**：
+  - `fetch_devices` 以安全 fallback（lambda）避免早期建構期找不到 `_fetch_unreal_devices/_fetch_ndisplay_devices`。  
+  - 調整方法與類別順序，修復 `'_is_device_connected'` 找不到的競態。  
+- 🖥️ **Loading 覆蓋層優化**：全頁遮罩穩定覆蓋內容，當鏡像選單成功或啟用本地後備選單時即自動隱藏。  
+- 🧰 **小調整**：Multi‑user 「+」 改為 `icon_add.png`，尺寸與樣式與工具列保持一致。  
+
+### v1.4.0  
+#### 2025/09/02  
+- 🖥️ **Switchboard New 全頁 Loading**：改為全頁半透明遮罩並置中顯示提示，初始化完成或超時自動隱藏。  
+- 🧭 **選單鏡像優化**：啟動時優先直接鏡像 Switchboard 的選單；多次重試失敗才建立本地後備選單，避免出現兩套相似選單的閃爍。  
+- ⚙️ **Config 選擇一致化**：
+  - 內嵌 Switchboard、MultiUser File Monitor、SVN Widget 均改為優先使用 `user_settings.json` 的「上次使用的 config」，不會再強制選第一個。  
+  - ComboBox 在偵測期間關閉訊號、偵測完成後再啟用，避免重複載入造成卡頓。  
+- 🌐 **Address/Config 顯示**：
+  - 底部 Address 與 Config File 直接鏡像 Switchboard，若為空或顯示占位字（Address/Adress）則回退本機非 127.x IPv4。  
+  - Address 設為唯讀且不可聚焦，避免誤編輯。  
+- 🔘 **全域與多用戶控制修正**：
+  - 「Start All / Connect All」與 Multi‑user `+` 綁定加上防重複守衛，移除 RuntimeWarning。  
+  - Start/Stop 圖示與啟用狀態統一，依實際連線/執行狀態即時更新。  
+- 🚀 **啟動體驗**：縮短初始化延遲（選單/等級/日誌綁定），預設分頁可由 `self.active_tab` 指定並立即套用。  
+
+### v1.3.5  
+#### 2025/08/28  
+- 🛠️ **Logger 等級過濾修正**：下拉改為直接控制處理器層級，切換 DEBUG/INFO/WARNING/ERROR 立即生效。  
+- 🧰 **Autoscroll 修正**：修正 QTextCursor 調用錯誤，Auto‑scroll 穩定工作。  
+- ⌨️ **Console Bar**：在 nDisplay Monitor 底部新增 Console 指令列，支援自動完成與歷史。  
+ - 📝 **版本號修正**：修正版本號顯示問題，確保在直接運行和打包環境下都能正確顯示。  
+ - 🖼️ **視窗預設大小與置中**：主視窗啟動時預設 1350×800，並自動置中顯示。  
+ - 🖥️ **多螢幕支援**：新增 `center_on_screen()`，在多螢幕環境以目前螢幕的可用區域計算居中位置。
+
+### v1.3.1  
+#### 2025/08/22  
+- 🧩 **nDisplay Monitor 改進**：每張卡片提供連線/斷線切換按鈕（優先使用 `icon_connect.png`/`icon_connected.png`），工具列提供 Connect/Disconnect All 單一切換按鈕並自動更新狀態。  
+- 🟢 **狀態燈修正**：左側狀態燈改用 `status_red.png`/`status_green.png` 並正確依連線狀態即時變化。  
+- 🔄 **即時刷新**：連線/斷線後強制刷新卡片與工具列，保證 UI 與實際狀態一致。  
+- 🧼 **關閉行為優化**：關閉程式時自動斷開所有 nDisplay 連線，避免殘留行程。  
+- 📝 **日誌統一**：重構 logger，統一由根 logger 寫入檔案與主控台，子模組透過 propagate 輸出，日誌更完整。  
+
+### v1.3.0  
+#### 2025/08/20  
+- 🚀 **新增 nDisplay Monitor 標籤頁**：採用卡片式網格（自適應列數），在主視窗索引 2 位置。  
+- 🔌 **連線控制**：  
+  - 頂部單一按鈕在 Connect All / Disconnect All 之間自動切換。  
+  - 每張卡右上角提供單設備的連線/斷開按鈕，優先使用自訂圖示 `icon_connect.png`/`icon_connected.png`。  
+- 💡 **狀態指示**：卡片左側狀態燈改用 `status_red.png`/`status_green.png`，連線狀態即時變色。  
+- 📈 **監控資料**：預設開啟 GPU Stats；新增並顯示 Driver 欄位；Refresh 按鈕執行全量拉取，確保靜態欄位（如 Driver）即時出現。  
+- 🧹 **關閉清理**：應用程式退出時自動斷開所有 nDisplay 設備連線，避免殘留行程；調整關閉順序以消除跨執行緒停止計時器的警告。  
+- 🐛 **修復**：正確讀取連線狀態（改為從 `devicedatas` 資料來源而非表格文字判斷）；連線/斷開後強制刷新卡片與工具列狀態。  
+
+### v1.2.2  
+#### 2025/08/12  
+- 🔧 **修復SVN元件問題**：修復SVN元件的UI佈局問題，確保SVN元件的UI佈局與MultiUser元件一致。  
+- 🎯 **優化SVN元件**：改進SVN元件的UI佈局，確保SVN元件的UI佈局與MultiUser元件一致。  
+- 📋 **改進SVN元件**：改進SVN元件的UI佈局，確保SVN元件的UI佈局與MultiUser元件一致。  
+- 🎨 **統一UI風格**：Changelog元件採用與MultiUser元件一致的設計風格，使用QGroupBox佈局和統一的字型樣式。  
+- 📱 **優化介面佈局**：改進Changelog的視覺層次與間距，提升使用者體驗。  
+
+### v1.2.1  
+#### 2025/08/07  
+- 🔧 **修復行程清理問題**：優化行程清理邏輯，只清理真正與Switchboard相關的Python行程，避免誤殺其他Python執行檔。  
+- 🎯 **精確行程識別**：使用wmic指令取得行程命令列參數，透過關鍵字過濾確保只清理Switchboard相關行程。  
+- 🛡️ **保護其他行程**：確保不會影響其他Python程式或指令的正常運作。  
+- 📋 **改進清理日誌**：更詳細的行程清理日誌紀錄。  
+- 🎨 **統一UI風格**：Changelog元件採用與MultiUser元件一致的設計風格，使用QGroupBox佈局和統一的字型樣式。  
+- 📱 **優化介面佈局**：改進Changelog的視覺層次與間距，提升使用者體驗。  
+
+### v1.2.0  
+#### 2025/07/26  
+- 🚀 **新增完整 Switchboard 嵌入**：整合完整的 Switchboard 介面，支援設備管理與 Unreal Engine 控制。  
+- 🔧 **修復 QToolTip 實例化問題**：解決嵌入式環境中 QToolTip 無法實例化的錯誤。  
+- 🎨 **改善 UI 可讀性**：優化停用按鈕的文字顏色，在深色主題下更易閱讀。  
+- 📦 **依賴項管理**：自動安裝與設定 Switchboard 所需的依賴項（python-osc、aioquic、six）。  
+- 🔄 **設定自動檢測**：智慧檢測並載入 Switchboard 設定檔，支援 VP56.json 等。  
+- 🌐 **OSC 伺服器整合**：內建 OSC 伺服器，支援與 Unreal Engine 通訊。  
+- 🎯 **雙模式支援**：同時支援 MultiUser 檔案監控與完整 Switchboard 功能。  
+- 📋 **增強的錯誤處理**：改進嵌入式 Switchboard 的錯誤處理與恢復機制。  
+
+### v1.1.1  
+#### 2025/07/21  
+- 🔧 **修復設定切換問題**：切換設定時自動清空舊的會話清單，避免不同設定的會話混亂。  
+- 🧹 **改進UI清理**：切換設定時重置所有相關UI狀態（會話清單、檔案樹、按鈕狀態）。  
+- 📋 **增強日誌紀錄**：紀錄設定切換與會話清理過程。  
+- 🎯 **優化使用者體驗**：確保每次切換設定後顯示的都是當前設定的會話。  
+
+### v1.1.0  
+#### 2025/07/18  
+- ✅ **新增Sandbox同步控制**：新增 "Enable Sandbox sync" 核取方塊，使用者可選擇是否啟用Sandbox同步。  
+- 🎛️ **使用者選擇權**：預設啟用Sandbox同步，但使用者可依需求停用。  
+- 📋 **改進使用者體驗**：當Sandbox同步被停用時，會顯示相應的日誌訊息。  
+- 🎯 **更靈活的工作流程**：支援僅複製到Content目錄，不執行網路同步。  
+
+### v1.0.9  
+#### 2025/07/15  
+- 🧹 **改進Sandbox清理**：複製前自動清除舊的Sandbox內容，確保只有最新檔案。  
+- 🔄 **優化同步流程**：避免舊檔案與新檔案混合，提高同步效率。  
+- 📋 **增強日誌紀錄**：詳細紀錄Sandbox清理過程。  
+
+### v1.0.8  
+#### 2025/07/11  
+- 🔧 **修復腳本打包問題**：`sync_sandbox.bat` 腳本現在會打包到應用程式中。  
+- 📦 **智慧腳本檢測**：自動檢測是否運行於打包環境，並從正確位置取得腳本。  
+- 🚀 **簡化部署**：不再需要在每個專案中手動複製同步腳本。  
+- 📋 **改進日誌輸出**：同步腳本的輸出現在會按行顯示，更清晰易讀。  
+
+### v1.0.7  
+#### 2025/06/09  
+- 🔄 **新增Sandbox同步功能**：複製檔案到Content目錄後，自動複製到Sandbox目錄並執行同步腳本。  
+- 🌐 **網路磁碟同步**：支援透過 `sync_sandbox.bat` 腳本同步到多個網路磁碟。  
+- 📊 **增強的複製日誌**：詳細紀錄Sandbox複製與同步腳本執行過程。  
+- 🛠️ **自動目錄建立**：自動建立Sandbox目錄結構。  
+
+### v1.0.6  
+#### 2025/06/06  
+- 🔧 **修復UUID模組匯入問題**：解決PyInstaller打包時標準庫模組缺失問題。  
+- 🎯 **優化build腳本**：新增更多隱藏匯入模組，提高打包成功率。  
+- 📦 **改進版本管理**：統一版本號管理，修復版本顯示不一致問題。  
+
+### v1.0.5  
+#### 2025/06/04  
+- 🐛 **修復import路徑問題**：解決不同執行環境下的模組匯入問題。  
+- 🔧 **優化PyInstaller設定**：減少打包檔案大小，排除不必要的模組。  
+- 📋 **改進錯誤處理**：增強import例外處理與fallback機制。  
+
+### v1.0.4  
+#### 2025/06/04  
+- 🚀 **PyInstaller打包支援**：新增完整的build腳本，支援一鍵打包。  
+- 📦 **優化檔案大小**：排除大型不必要模組，減少可執行檔大小。  
+- 🎯 **簡化部署**：移除run.py包裝器，直接從src/main.py構建。  
+
+### v1.0.3  
+#### 2025/06/01  
+- 🎨 **新增圖示支援**：應用程式現在顯示Switchboard圖示。  
+- 🔄 **圖示整合**：為複製、刷新等按鈕新增相應圖示。  
+- 🌟 **狀態指示器**：為MultiUser會話新增狀態圖示（綠色/青色/橙色/紅色）。  
+- 📊 **改進會話排序**：依最後修改時間排序，最新的會話顯示在頂部。  
+- 🎯 **優化表格選擇**：修復表格列選擇高亮問題。  
+
+### v1.0.2  
+#### 2025/05/23  
+- 📋 **新增版本資訊顯示**  
+- 🔄 **修改排序顯示**  
+- 📂 **修改檔案樹顯示**  
+
+### v1.0.1  
+#### 2025/05/21  
+- 🔧 **修復Switchboard模組匯入問題**：當Switchboard的Python模組不可用時，程式會自動切換到後備設定模式。  
+- 🔍 **改進設定檢測**：新增多種路徑檢測方法，提高設定檢測成功率。  
+- 📋 **後備設定模式**：即使Switchboard不可用，程式也能直接掃描MultiUser目錄。  
+- 🛠️ **錯誤處理優化**：更友善的錯誤提示與自動恢復機制。  
+
+### v1.0.0  
+#### 2025/05/15  
+- 🚀 **初始版本發佈**  
+- 📋 **基本的設定檢測與檔案監控功能**  
+- 📋 **使用者介面與檔案複製功能**
